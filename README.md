@@ -1,5 +1,5 @@
 # OS
-Worse than everyone's
+Better than everyone's
 
 
 Planas:
