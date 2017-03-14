@@ -18,13 +18,6 @@ Adresu erdve.
   Vidine atmintis (klase) = HashMap.
   Isorine atmintis = failas.
 
-Kanalu irenginus (klase)
+Kanalu irenginys (klase)
   Turi IN, OUT, Isorines atminties fieldus.
   Registrai: adresai i kur, ka, is kur.
-  
-  
-
-  
-  
-  
-  
