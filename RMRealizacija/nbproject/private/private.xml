@@ -3,8 +3,10 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/vytau/Documents/NetBeansProjects/RMRealizacija/src/RMachine/RealMachine.java</file>
-            <file>file:/C:/Users/vytau/Documents/NetBeansProjects/RMRealizacija/src/rmrealizacija/RMRealizacija.java</file>
+            <file>file:/C:/Users/Aleksas/Documents/NetBeansProjects/OS-master/RMRealizacija/src/RMachine/ChannelDevice.java</file>
+            <file>file:/C:/Users/Aleksas/Documents/NetBeansProjects/OS-master/RMRealizacija/src/RMachine/RAM.java</file>
+            <file>file:/C:/Users/Aleksas/Documents/NetBeansProjects/OS-master/RMRealizacija/src/rmrealizacija/RMRealizacija.java</file>
+            <file>file:/C:/Users/Aleksas/Documents/NetBeansProjects/OS-master/RMRealizacija/src/RMachine/Procesor.java</file>
         </group>
     </open-files>
 </project-private>
