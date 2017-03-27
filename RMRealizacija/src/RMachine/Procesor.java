@@ -434,13 +434,22 @@ public class Procesor {
                     mode = true;
                     ip = ift;
                     break;
-                case 33://HLT
+                case 33://TOD xxxx -(to disk) saves value stored in rw to memory
+                    if(mode)
+                        return;
+                    interuptInVM = true;
+                    ifr = 128;//cia tarkim yra SEND_TO_DISK bitas
+                    mode = true;
+                    ip = ift;
+                    break;
+                case 34://HLT
                     if(mode)
                         return;
                     interuptInVM = true;
                     ifr = 8;//cia tarkim yra PROCESS_END bitas
                     mode = true;
                     ip = ift;
+                    break;
                 default:
                     if(mode)
                         return;

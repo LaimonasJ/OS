@@ -4,11 +4,7 @@
  * and open the template in the editor.
  */
 package rmrealizacija;
-import RMachine.ChannelDevice;
-import RMachine.Input;
-import RMachine.Output;
-import RMachine.Procesor;
-import RMachine.RAM;
+import RMachine.*;
 
 /**
  *
@@ -24,9 +20,11 @@ public class RMRealizacija {
         RAM ram = new RAM();
         Input input = new Input();
         Output output = new Output();
+        HDD memory = new HDD("memory.txt");
         cdevice.setRAM(ram);
         cdevice.setInput(input);
         cdevice.setOutput(output);
+        cdevice.setHDD(memory);
         Procesor procesor = new Procesor();
         procesor.setup(cdevice, ram);
         procesor.start();

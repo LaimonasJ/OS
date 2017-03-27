@@ -18,6 +18,7 @@ public class ChannelDevice extends Thread{
     private IRAM ram;
     private IInput input;
     private IOutput output;
+    private IExt memory;
 
     public ChannelDevice() {
         sb = 0;
@@ -41,6 +42,10 @@ public class ChannelDevice extends Thread{
     
     public void setOutput(IOutput output){
         this.output = output;
+    }
+    
+    public void setHDD(IExt memory){
+        this.memory = memory;
     }
     
     public void setCDevice(int sb, int db, int st, int dt, int adr){
@@ -72,6 +77,7 @@ public class ChannelDevice extends Thread{
                     stream = input.getInt();
                     break;
                 case 1://memory
+                    stream = memory.get(adr);
                     break;
                 case 2://processor
                     stream = procesor.rw;
@@ -87,6 +93,7 @@ public class ChannelDevice extends Thread{
                     output.printInt(stream);
                     break;
                 case 1://memory
+                    memory.save(adr, stream);
                     break;
                 case 2://processor
                     synchronized(procesor){
