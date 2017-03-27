@@ -76,6 +76,10 @@ public class ChannelDevice extends Thread{
                 case 2://processor
                     stream = procesor.rw;
                     break;
+                case 3://RAM
+                    synchronized(ram){
+                        stream = ram.get(adr);
+                    }
             }
             //destination
             switch(dt){
@@ -100,6 +104,10 @@ public class ChannelDevice extends Thread{
                         notify();
                     }
                     break;
+                case 3://RAM
+                    synchronized(ram){
+                        ram.save(adr, stream);
+                    }
             }
             synchronized(procesor){
                 if(procesor.ch != -1)
