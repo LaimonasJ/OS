@@ -12,15 +12,15 @@ package RMachine;
 import java.io.*;
 import java.nio.ByteBuffer;
 
+
 public class HDD implements IExt{
     
-    FileInputStream in = null;
-    FileOutputStream out = null;
     File file = null;
+    RandomAccessFile rFile = null;
+
     
     public HDD(String name){
-    file = new File(name);       
-            
+    file = new File(name);      
     }
     
     
@@ -28,29 +28,36 @@ public class HDD implements IExt{
     @Override
     public void save(int address, int value){
      
-    try{
-    FileOutputStream fos = new FileOutputStream(file);    
-    fos.write(ByteBuffer.allocate(4).putInt(value).array(),address,4);  
-    fos.close();
+    try{  
+    RandomAccessFile rFile = new RandomAccessFile(file, "rw");    
+    rFile.seek(address*4);
+    rFile.writeInt(value);  
     }   
-    
-    
+
      catch (Exception e)
     {
         System.out.println(e.getMessage());
     }  
-    
-    
-    
+    finally
+    {
+        try{
+        rFile.close();    
+        }
+        catch (Exception e){
+        
+        }
+        
+    }
+
     }
     @Override
     public int get(int address){
     try{
-    FileInputStream fis = new FileInputStream(file);  
-    byte [] arr = new byte[4];
-    fis.read(arr, address, 4);
-    ByteBuffer bb = ByteBuffer.wrap(arr);
-    return bb.getInt();
+    RandomAccessFile rFile = new RandomAccessFile(file, "r");
+    rFile.seek(address*4);
+    int ret = rFile.readInt();
+    rFile.close();
+    return ret;
     }    
     catch (Exception e)
     {
