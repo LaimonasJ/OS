@@ -9,13 +9,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *sb and db:
- * 0 - rw
- * 1 - ip
-   2 - ptr
-   3 - sf
-   4 - ifr 
-   5 - sp
  * 
  * @author vytau
  */
@@ -58,72 +51,19 @@ public class ChannelDevice extends Thread{
         this.adr = adr;
     }
     
-    private int getFromProcesor(){
-        synchronized(procesor){
-            switch(sb){
-                case 0://rw
-                    return procesor.rw;
-                case 1://ip
-                    return procesor.ip;
-                case 2://ptr
-                    return procesor.ptr;
-                case 3://sf
-                    return procesor.sf;
-                case 4://ifr
-                    return procesor.ifr;
-                case 5://sp
-                    return procesor.sp;
-            }
-        }
-        synchronized(procesor){
-            procesor.ch = 3;//error
-        }
-        return -1;
-    }
-    
-    private void sendToProcesor(int stream){
-        switch(db){
-            case 0://rw
-                procesor.rw = stream;
-                break;
-            case 1://ip
-                procesor.ip = stream;
-                break;
-            case 2://ptr
-                procesor.ptr = stream;
-                break;
-            case 3://sf
-                procesor.sf = stream;
-                break;
-            case 4://ifr
-                procesor.ifr = (short)stream;
-                break;
-            case 5://sp
-                procesor.sp = (short)stream;
-                break;
-            default:
-                synchronized(procesor){
-                    procesor.ch = 3;//error
-                }
-        }
-        synchronized(this){
-            notify();
-        }
-    }
-    
     @Override
     public void run() {
         int ch = 0;
-        while(ch != -1){
+        while(true){
             while(ch == 0){
                 synchronized(procesor){
                     ch = procesor.ch;
                 }
             }
-            if(ch == -1)
-                break;
             int stream = 0;
             synchronized(procesor){
+                if(procesor.ch == -1)
+                    break;
                 procesor.ch = 2;//busy
             }
             //source
@@ -131,13 +71,10 @@ public class ChannelDevice extends Thread{
                 case 0://Input/Output
                     stream = input.getInt();
                     break;
-                case 1://RAM
-                    stream = ram.get(adr);
+                case 1://memory
                     break;
-                case 2://memory
-                    break;
-                case 3://processor
-                    stream = getFromProcesor();
+                case 2://processor
+                    stream = procesor.rw;
                     break;
             }
             //destination
@@ -145,13 +82,23 @@ public class ChannelDevice extends Thread{
                 case 0://Input/Output
                     output.printInt(stream);
                     break;
-                case 1://RAM
-                    ram.save(adr, stream);
+                case 1://memory
                     break;
-                case 2://memory
-                    break;
-                case 3://processor
-                    sendToProcesor(stream);
+                case 2://processor
+                    synchronized(procesor){
+                        procesor.ch = 3;//delivered
+                    }
+                    //Uncomment once with OS
+                    while(true){
+                        synchronized(procesor){
+                            if(procesor.ch == 0)
+                                break;
+                        }
+                    }
+                    procesor.rw = stream;
+                    synchronized(this){
+                        notify();
+                    }
                     break;
             }
             synchronized(procesor){
@@ -159,6 +106,10 @@ public class ChannelDevice extends Thread{
                     procesor.ch = 0;//free
             }
             ch = 0;
+            //comment once with OS
+            synchronized(this){
+                notify();
+            }
         }
     }
 }
