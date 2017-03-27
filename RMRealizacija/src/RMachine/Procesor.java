@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 package RMachine;
-import static java.lang.Thread.sleep;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -13,7 +13,8 @@ import java.util.logging.Logger;
  * 0-ready
  * 1-requested
  * 2-busy
- * 3-error
+ * 3-delivered
+ * 4-error
  * 
  * 
  * @author vytau
@@ -40,7 +41,7 @@ public class Procesor {
         ptr=20;
         ift=100;
         sf=0;
-        mode=false; //1 super 0 user? gal keisti į boolean? jo geriau boolean :) true:super
+        mode=true; //1 super 0 user? gal keisti į boolean? jo geriau boolean :) true:super
         ifr=0;
         ti=33;
         sp=0;
@@ -448,6 +449,17 @@ public class Procesor {
                     mode = true;
                     ip = ift;
             }
+            System.out.println("rw=" + rw);
+            System.out.println("ip=" + ip);
+            System.out.println("ptr=" + ptr);
+            System.out.println("ift=" + ift);
+            System.out.println("sf=" + sf);
+            System.out.println("mode=" + mode);
+            System.out.println("ifr=" + ifr);
+            System.out.println("ti=" + ti);
+            System.out.println("ch=" + ch);
+            System.out.println(ram.toString());
+            System.out.println("-------------------------------------------------------");
         }
     }
 }

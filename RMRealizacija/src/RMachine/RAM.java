@@ -12,12 +12,12 @@ public class RAM implements IRAM{
     
     public RAM(){
         //simple RM test
-//        memory.put(0, 1200);
-//        memory.put(1, 68);
-//        memory.put(2, 3100);
-//        memory.put(3, 3000);
-//        memory.put(4, 3200);
-//        memory.put(68, 97);
+        memory.put(0, 1300);
+        memory.put(1, 68);
+        memory.put(2, 3200);
+        memory.put(3, 3100);
+        memory.put(4, 3300);
+        memory.put(68, 97);
         //full RM test
 //        memory.put(0, 1300);
 //        memory.put(1, 68);
@@ -26,13 +26,13 @@ public class RAM implements IRAM{
 //        memory.put(4, 1100);
 //        memory.put(5, 3300);
 //        memory.put(68, 97);
-        memory.put(0, 1344);
-        memory.put(1, 3200);
-        memory.put(2, 3300);
-        memory.put(20, 0);
-        memory.put(34, 40);
-        memory.put(44, 68);
-        memory.put(100, 3300);
+//        memory.put(0, 1344);
+//        memory.put(1, 3200);
+//        memory.put(2, 3300);
+//        memory.put(20, 0);
+//        memory.put(34, 40);
+//        memory.put(44, 68);
+//        memory.put(100, 3300);
     }
     
     @Override
@@ -42,5 +42,9 @@ public class RAM implements IRAM{
     @Override
     public int get(int address){
         return memory.get(address);
+    }
+    @Override
+    public String toString(){
+        return memory.toString();
     }
 }
