@@ -93,7 +93,7 @@ public class Input implements IInput
                }
                catch(NumberFormatException ex)
                {
-                  updateFeedback("Only integers from " + Integer.MIN_VALUE + " to " + Integer.MAX_VALUE + " allowed");
+                  updateFeedback("Only integers from " + Integer.MIN_VALUE + " to " + Integer.MAX_VALUE + " allowed!");
                } 
             }
             else
