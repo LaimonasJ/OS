@@ -25,8 +25,6 @@ public class Input implements IInput
 
    private void createFrame()
    {
-      frame = new JFrame("Input");
-      frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
      
       
@@ -34,28 +32,69 @@ public class Input implements IInput
       feedback.setEditable(false);
       updateFeedback();
       
-      JTextField txtGuess = new JTextField(1);
-      txtGuess.addKeyListener(new KeyAdapter()
+      JTextField keyField = new JTextField(1);
+      keyField.addKeyListener(new KeyAdapter()
       {
          public void keyTyped(KeyEvent e)
          {
-            if (txtGuess.getText().length() >= 1) // limit textfield to 3 characters
+            if (keyField.getText().length() >= 1) // limit textfield to 3 characters
             {
                e.consume();
             }
          }
       });
+      
 
       JButton keyPress = new JButton("Enter the following key: ");
       keyPress.addActionListener(new ActionListener()
       {
          public void actionPerformed(ActionEvent e)
          {
-            if (txtGuess.getText().length() > 0)
+            if (keyField.getText().length() > 0)
             {
-               in = txtGuess.getText().charAt(0);
-               txtGuess.setText("");
+               in = keyField.getText().charAt(0);
+               keyField.setText("");
                updateFeedback();   
+            }
+            else
+            {
+               in = 10; //10 - new line
+               updateFeedback();
+            }
+         }
+      });
+      
+      
+      JTextField intField = new JTextField(11);
+      intField.addKeyListener(new KeyAdapter()
+      {
+         public void keyTyped(KeyEvent e)
+         {
+            if (intField.getText().length() > 11) // limit textfield to 3 characters
+            {
+               e.consume();
+            }
+         }
+      });
+      
+      JButton intSend = new JButton("Enter the following decimal code: "); //2147483647
+      intSend.addActionListener(new ActionListener()
+      {
+         public void actionPerformed(ActionEvent e)
+         {
+            if (intField.getText().length() > 0)
+            {
+               int temp;
+               try{
+               temp = Integer.parseInt(intField.getText());
+               in = temp;
+               intField.setText("");
+               updateFeedback();   
+               }
+               catch(NumberFormatException ex)
+               {
+                  updateFeedback("Only integers from " + Integer.MIN_VALUE + " to " + Integer.MAX_VALUE + " allowed");
+               } 
             }
             else
             {
@@ -76,29 +115,61 @@ public class Input implements IInput
       });
       
       
-      JPanel panel = new JPanel(new FlowLayout());
-      panel.add(keyPress);
-      panel.add(txtGuess);
-      panel.add(enter);
-      panel.add(feedback);
+      JPanel panel1 = new JPanel(new FlowLayout());
+      panel1.add(keyPress);
+      panel1.add(keyField);
+      
+      JPanel panel2 = new JPanel(new FlowLayout());
+      panel2.add(intSend);
+      panel2.add(intField);
+      
+      JPanel panel3 = new JPanel(new FlowLayout());
+      panel2.add(enter);
+      
+      JPanel panel4 = new JPanel(new FlowLayout());
+      panel4.add(feedback);
       
       
-      frame.add(panel);
+      frame = new JFrame("Input");
+      frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+      frame.setLayout(new FlowLayout());
+
+      frame.add(panel1);
+      frame.add(panel2);
+      frame.add(panel3);
+      frame.add(panel4);
+      
+     
       frame.pack();
       frame.setVisible(true);
    }
    
    private void updateFeedback()
    {
-      feedback.setText("Latest input: " + (in == -1 ? "null" : in));
+      updateFeedback("");
+   }
+   
+   private void updateFeedback(String message)
+   {
+      feedback.setText(message + " Current input: " + (in == -1 ? "null" : in));
    }
 
    @Override
    public int getInt()
    {
+      in = -1;
+      updateFeedback("Waiting for input!");
+      while(in == -1)
+      {
+         try
+         {
+            Thread.sleep(500);
+         } catch (InterruptedException ex)
+         {}
+      }
       int rez = in;
       in = -1;
-      updateFeedback();
+      updateFeedback("Input sent!");
       return rez;
       //return (int) input.nextLine().charAt(0);
    }
