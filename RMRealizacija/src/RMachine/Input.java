@@ -178,4 +178,9 @@ public class Input implements IInput
    {
       frame.dispose();
    }
+
+    @Override
+    public boolean getStatus() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

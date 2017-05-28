@@ -5,11 +5,10 @@
  */
 package RMachine;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import OS.StartStop;
 
 /**
- *ch:
+ *ch / inputChannel:
  * 0-ready
  * 1-requested
  * 2-busy
@@ -17,7 +16,7 @@ import java.util.logging.Logger;
  * 4-error
  * 
  * 
- * @author vytau
+ * @author aleksas
  */
 public class Procesor {
 
@@ -25,6 +24,7 @@ public class Procesor {
     private boolean mode; //režimo 1B
     private short ti; //timer 2B
     public short ch; //kanalų 2B
+    public short inputChannel; //inputo 2B
     public int rw; //darbinis 4B 
     public int ip; //instrukcijos 4B
     public int ptr; //puslapiavimo 4B
@@ -41,11 +41,12 @@ public class Procesor {
         ptr=20;
         ift=100;
         sf=0;
-        mode=true; //1 super 0 user? gal keisti į boolean? jo geriau boolean :) true:super
+        mode=true; //true:supervizor
         ifr=0;
         ti=33;
         sp=0;
         ch=0;
+        inputChannel = 0;
     }
     
     public void setup(ChannelDevice device, IRAM ram){
@@ -54,18 +55,32 @@ public class Procesor {
         this.ram = ram;
     }
     
-    public boolean start(){
+    @SuppressWarnings("empty-statement")
+    public void start(){
         if(cdevice == null || ram == null)
-            return false;
+            return;
         cdevice.start();
         runtime();
+        
+        System.out.println("rw=" + rw);
+        System.out.println("ip=" + ip);
+        System.out.println("ptr=" + ptr);
+        System.out.println("ift=" + ift);
+        System.out.println("sf=" + sf);
+        System.out.println("mode=" + mode);
+        System.out.println("ifr=" + ifr);
+        System.out.println("ti=" + ti);
+        System.out.println("ch=" + ch);
+        System.out.println(ram.toString());
+        
         ch = -1;
-        try {
-            cdevice.join();
-        } catch (InterruptedException ex) {
-            Logger.getLogger(Procesor.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return true;
+//        while(true);
+//        try {
+//            cdevice.join();
+//        } catch (InterruptedException ex) {
+//            Logger.getLogger(Procesor.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        return true;
     }
     
     private void CMP(int value){
@@ -82,15 +97,23 @@ public class Procesor {
         }
     }
     
-    private void GRE(){
-        if(ch == 3){
-            ch = 0;
+    private void GRE(int fromInput){
+        int registerVal;
+        if(fromInput > 0)
+            registerVal = inputChannel;
+        else
+            registerVal = ch;
+        if(registerVal == 3){
+            if(fromInput > 0)
+                inputChannel = 0;
+            else
+                ch = 0;
             sf = 1;
         }
         else{
             sf = 0;
         }
-        waitForCDevice();
+        //waitForCDevice();
     }
     
     private void PUSH(){
@@ -104,19 +127,31 @@ public class Procesor {
     }
     
     private void XCH(int command){
-        
+        //xxzy hhhh qqqq
         command = (command * 10000 + getFromRAM(ip, 0)) % 1000000;
         ip++;
         int from = command / 100000;
         int to = (command / 10000) % 10;
-        int address = command % 10000;
-        if(ch != 0){
+        int addressFrom = command % 10000;
+        int addressTo = getFromRAM(ip, 0);
+        ip++;
+        if(ch != 0)
             sf = 0;
-        }
         else{
-            System.out.println("Asking for resources");
-            cdevice.setCDevice(from, to, from, to, address);
+            if(from == 0){
+                cdevice.setCDevice(addressFrom, addressTo, from, to);
+                inputChannel = 1;
+            }
+            else{
+            //System.out.println("Asking for resources");
+                cdevice.setCDevice(addressFrom, addressTo, from, to);
+            }
             ch = 1;//requested
+//            try {
+//                cdevice.wait();
+//            } catch (InterruptedException ex) {
+//                Logger.getLogger(Procesor.class.getName()).log(Level.SEVERE, null, ex);
+//            }
         }
     }
     
@@ -132,13 +167,13 @@ public class Procesor {
         synchronized(ram){
             switch(segment){
                 case 0:
-                    firstBlockAddress = ram.get(ptr + blockNr);
+                    firstBlockAddress = ram.get(ptr + blockNr);//code segment
                     break;
                 case 1:
-                    firstBlockAddress = ram.get(ptr + 10 + blockNr);
+                    firstBlockAddress = ram.get(ptr + 10 + blockNr);//data segment
                     break;
                 case 2:
-                    firstBlockAddress = ram.get(ptr + 20 + blockNr);
+                    firstBlockAddress = ram.get(ptr + 20 + blockNr);//stack segment
                     break;
             }
         }
@@ -153,7 +188,7 @@ public class Procesor {
             }
             System.out.println("Got " + rw);
         } catch (InterruptedException ex) {
-            Logger.getLogger(Procesor.class.getName()).log(Level.SEVERE, null, ex);
+            System.out.println("Something is wrong with waiting for cdevice");
         }
     }
     
@@ -182,10 +217,10 @@ public class Procesor {
      * 
      *@return 
      */
-    private void getFromCDevice(int adress, int from){
+    private void getFromCDevice(int address, int from){
         while(ch != 0)
             waitForCDevice();
-        cdevice.setCDevice(2, 2, from, 2, adress);
+        cdevice.setCDevice(address, 2, from, 2);
         ch = 1;//requested
         System.out.println("Asking for resources");
         waitForCDevice();
@@ -206,7 +241,7 @@ public class Procesor {
         if(ch != 0)
             waitForCDevice();
         System.out.println("Sending data");
-        cdevice.setCDevice(2, 2, 2, to, adress);
+        cdevice.setCDevice(2, adress, 2, to);
         ch = 1;//requested
     }
     
@@ -215,7 +250,7 @@ public class Procesor {
         int instruction = command / 100;
         
         switch(instruction){
-        //safe
+            //save
             case 1://SPT
                 command = command * 100 + getFromRAM(ip, 0);
                 ip++;
@@ -236,7 +271,7 @@ public class Procesor {
                 ip++;
                 sendToRAM(command % 10000, ifr, 1);//sends ifr
                 return true;
-        //load
+            //load
             case 5://LPT
                 command = command * 100 + getFromRAM(ip, 0);
                 ip++;
@@ -262,10 +297,10 @@ public class Procesor {
                 mode = false;
                 return true;
             case 10://RTI
-                ti = (short)(command % 10000);
+                ti = (short)(command % 100);
                 return true;
             case 11://GRE - get resource(if ch = delivered(3), sets SF = 1 and CH = 0, else SF = 0)
-                GRE();
+                GRE(command % 100);
                 return true;
             case 12:
                 XCH(command);//XCH (XCH komanda nesimaisys su SPT, nes ji yra zymiai ilgesne)
@@ -286,190 +321,215 @@ public class Procesor {
         int operand = 0;
         boolean interuptInVM = false;
         
-        while(true){
-            adressParser = 100;
-            command = getFromRAM(ip, 0);
-            ip++;
-            
-            instruction = command / adressParser;
-            
-            if(mode){
-                if(ifr != 0 && !interuptInVM)
-                    break;
-                if(supervizorsInstructions(command))//Jei randam, kad tai supervizoriaus instrukcija, tolimesniu instrukciju paieska nebera svarbi
-                    continue;
-                if(instruction < 21){
-                    command = command * 100 + getFromRAM(ip, 0);
-                    ip++;
-                }
-                adressParser = 10000;
-            }
-            else{
-                //checks for code segment error
-                if(ip < 0 || ip > 99)
-                    ifr = 1;//cia tarkim yra CODE_SEG_ERROR bitas, bet galesim keisti
-                if(ti == 0)
-                    ifr = 2;//cia tarkim yra TIME_OUT bitas, bet galesim keisti
-                ti--;
-                if(ifr != 0){
-                    interuptInVM = true;
-                    mode = true;
-                    ip = ift;
-                    continue;
-                }
-            }
-            //xxyyzz:
-            //xx - instrukcijos kodas
-            //yy - adresas, jei mode = 0
-            //yyzz - adresas, jei mode = 1
-            //instrukcijos, kuriom pakanka maziau nei 1 zodzio, like bitai uzpildomi 0
-            //SET instrukcija - xxyzzzzzz:
-            //xx - instrukcijos kodas
-            //y - zenkas:
-            //  0 = +
-            //  1 = -
-            //zzzzzz - sesiazenklis skaicius
-            if(command / 10000000 == 34){//SET
-                command = command * 100 + getFromRAM(ip, 0);
-                ip ++;//reiks 2 zodziu
-                if(command / 1000000 % 10 == 1){
-                    rw = -1 * command % 1000000;
-                }
-                else{
-                    rw = command % 1000000;
-                }
-                continue;
-            }
-            
-            if(instruction < 19){
-                operand = rw;
-                if(command % adressParser > 99){
-                    interuptInVM = true;
-                    ifr = 4;//cia tegul DATA_SEGMENT_FAULT
-                    mode = true;
-                    ip = ift;
-                    continue;
-                }
-                rw = getFromRAM(command % adressParser, 1);//sets rw
-            }
-            switch(instruction){
-            //arithmetics
-                case 13://ADD xy
-                    rw = rw + operand;
-                    break;
-                case 14://SUB xy
-                    rw = rw - operand;
-                    break;
-                case 15://MUL xy
-                    rw = rw * operand;
-                    break;
-                case 16://DIV xy
-                    rw = rw / operand;
-                    break;
-            //logical
-                case 17://AND xy
-                    rw = rw & operand;
-                    break;
-                case 18://OR xy
-                    rw = rw | operand;
-                    break;
-                case 19://NOT
-                    rw = ~rw;
-                    break;
-            //compare
-                case 20://CMP xy
-                    CMP(operand);
-                    break;
-            //data stream
-                case 21://LOW xy
-                    rw = getFromRAM(command % adressParser, 1);//sets rw
-                    break;
-                case 22://SAW xy
-                    sendToRAM(command % adressParser, rw, 1);//sends rw
-                    break;
-            //stack
-                case 23://PUSH
-                    PUSH();
-                    break;
-                case 24://POP
-                    POP();
-                    break;
-            //jumps
-                case 25://JMP
-                    ip = rw;
-                    break;
-                case 26://JE
-                    ip = sf == 0? rw : ip;
-                    break;
-                case 27://JL
-                    ip = sf == 1? rw : ip;
-                    break;
-                case 28://JG
-                    ip = sf == 2? rw : ip;
-                    break;
-                case 29://JLE
-                    ip = (sf == 0 || sf == 1)? rw : ip;
-                    break;
-                case 30://JGE
-                    ip = (sf == 0 || sf == 2)? rw : ip;
-                    break;
-            //in/out and stop process
-                case 31://IN
-                    //getFromCDevice(0, 0);
-                    //Uncomment once with OS
-                    if(mode)
-                        return;
-                    interuptInVM = true;
-                    ifr = 32;//cia tarkim yra GET_FROM_CDEVICE bitas
-                    mode = true;
-                    ip = ift;
-                    break;
-                case 32://OUT
-                    //Uncomment once with OS
-                    //sendToCDevice(0, 0);
-                    if(mode)
-                        return;
-                    interuptInVM = true;
-                    ifr = 64;//cia tarkim yra SEND_TO_CDEVICE bitas
-                    mode = true;
-                    ip = ift;
-                    break;
-                case 33://TOD xxxx -(to disk) saves value stored in rw to memory
-                    if(mode)
-                        return;
-                    interuptInVM = true;
-                    ifr = 128;//cia tarkim yra SEND_TO_DISK bitas
-                    mode = true;
-                    ip = ift;
-                    break;
-                case 34://HLT
-                    if(mode)
-                        return;
-                    interuptInVM = true;
-                    ifr = 8;//cia tarkim yra PROCESS_END bitas
-                    mode = true;
-                    ip = ift;
-                    break;
-                default:
-                    if(mode)
-                        return;
-                    interuptInVM = true;
-                    ifr = 16;//cia tarkim yra ILLEGAL_INSTRUCTION bitas
-                    mode = true;
-                    ip = ift;
-            }
-            System.out.println("rw=" + rw);
-            System.out.println("ip=" + ip);
-            System.out.println("ptr=" + ptr);
-            System.out.println("ift=" + ift);
-            System.out.println("sf=" + sf);
-            System.out.println("mode=" + mode);
-            System.out.println("ifr=" + ifr);
-            System.out.println("ti=" + ti);
-            System.out.println("ch=" + ch);
-            System.out.println(ram.toString());
-            System.out.println("-------------------------------------------------------");
-        }
+        //Cia turi paleisti StartStop<----------------------------------------------------------------------
+        StartStop os = new StartStop(this, cdevice, ram);
+        os.init();
+        
+//        while(true){
+//            System.out.println("rw=" + rw);
+//            System.out.println("ip=" + ip);
+//            System.out.println("ptr=" + ptr);
+//            System.out.println("ift=" + ift);
+//            System.out.println("sf=" + sf);
+//            System.out.println("mode=" + mode);
+//            System.out.println("ifr=" + ifr);
+//            System.out.println("ti=" + ti);
+//            System.out.println("ch=" + ch);
+//            System.out.println(ram.toString());
+//            System.out.println("-------------------------------------------------------");
+//            adressParser = 100;
+//            command = getFromRAM(ip, 0);
+//            ip++;
+//            
+//            instruction = command / adressParser;
+//            
+//            if(mode){
+//                //Cia bus dalis OS'o<------------------------------------------------------------------------------
+//                if(ifr != 0 && !interuptInVM)
+//                    break;
+//                if(supervizorsInstructions(command))//Jei randam, kad tai supervizoriaus instrukcija, tolimesniu instrukciju paieska nebera svarbi
+//                    continue;
+//                if(instruction < 21){
+//                    command = command * 100 + getFromRAM(ip, 0);
+//                    ip++;
+//                }
+//                adressParser = 10000;
+//            }
+//            else{
+//                //checks for code segment error
+//                if(ip < 0 || ip > 99)
+//                    ifr = 1;//cia tarkim yra CODE_SEG_ERROR bitas, bet galesim keisti
+//                if(ti == 0)
+//                    ifr = 2;//cia tarkim yra TIME_OUT bitas, bet galesim keisti
+//                else
+//                    ti--;
+//                if(ifr != 0){
+//                    interuptInVM = true;
+//                    ram.save(sp, ip);
+//                    sp++;
+//                    mode = true;
+//                    ip = ift;
+//                    continue;
+//                }
+//            }
+//            //xxyyzz:
+//            //xx - instrukcijos kodas
+//            //yy - adresas, jei mode = 0
+//            //yyzz - adresas, jei mode = 1
+//            //instrukcijos, kuriom pakanka maziau nei 1 zodzio, like bitai uzpildomi 0
+//            //SET instrukcija - xxyzzzzzz:
+//            //xx - instrukcijos kodas
+//            //y - zenkas:
+//            //  0 = +
+//            //  1 = -
+//            //zzzzzz - sesiazenklis skaicius
+//            if(command / 100 == 35){//SET
+//                int symbol = command / 10 % 10;
+//                int digit = command % 10 * 10000 + getFromRAM(ip, 0);
+//                ip ++;//reiks 2 zodziu
+//                if(symbol > 0)
+//                    rw = -1 * digit;
+//                else
+//                    rw = digit;
+//                continue;
+//            }
+//            
+//            if(instruction < 19){
+//                operand = rw;
+//                if(command % adressParser > 99){
+//                    interuptInVM = true;
+//                    ifr = 4;//cia tegul DATA_SEGMENT_FAULT
+//                    mode = true;
+//                    ip = ift;
+//                    continue;
+//                }
+//                rw = getFromRAM(command % adressParser, 1);//sets rw
+//            }
+//            switch(instruction){
+//            //arithmetics
+//                case 13://ADD xy
+//                    rw = rw + operand;
+//                    break;
+//                case 14://SUB xy
+//                    rw = rw - operand;
+//                    break;
+//                case 15://MUL xy
+//                    rw = rw * operand;
+//                    break;
+//                case 16://DIV xy
+//                    if(operand == 0){
+//                        if(mode)
+//                            return;
+//                        ifr = 256;//DIVISION_BY_ZERO
+//                        interuptInVM = true;
+//                        mode = true;
+//                        ram.save(sp, ip);
+//                        sp++;
+//                        ip = ift;
+//                    }
+//                    rw = rw / operand;
+//                    break;
+//            //logical
+//                case 17://AND xy
+//                    rw = rw & operand;
+//                    break;
+//                case 18://OR xy
+//                    rw = rw | operand;
+//                    break;
+//                case 19://NOT
+//                    rw = ~rw;
+//                    break;
+//            //compare
+//                case 20://CMP xy
+//                    CMP(operand);
+//                    break;
+//            //data stream
+//                case 21://LOW xy
+//                    rw = getFromRAM(command % adressParser, 1);//sets rw
+//                    break;
+//                case 22://SAW xy
+//                    sendToRAM(command % adressParser, rw, 1);//sends rw
+//                    break;
+//            //stack
+//                case 23://PUSH
+//                    PUSH();
+//                    break;
+//                case 24://POP
+//                    POP();
+//                    break;
+//            //jumps
+//                case 25://JMP
+//                    ip = rw;
+//                    break;
+//                case 26://JE
+//                    ip = sf == 0? rw : ip;
+//                    break;
+//                case 27://JL
+//                    ip = sf == 1? rw : ip;
+//                    break;
+//                case 28://JG
+//                    ip = sf == 2? rw : ip;
+//                    break;
+//                case 29://JLE
+//                    ip = (sf == 0 || sf == 1)? rw : ip;
+//                    break;
+//                case 30://JGE
+//                    ip = (sf == 0 || sf == 2)? rw : ip;
+//                    break;
+//            //in/out and stop process
+//                case 31://IN
+//                    //getFromCDevice(0, 0);
+//                    //Uncomment once with OS
+//                    if(mode)
+//                        return;
+//                    interuptInVM = true;
+//                    ifr = 32;//cia tarkim yra GET_FROM_CDEVICE bitas
+//                    mode = true;
+//                    ram.save(sp, ip);
+//                    sp++;
+//                    ip = ift;
+//                    break;
+//                case 32://OUT
+//                    //Uncomment once with OS
+//                    //sendToCDevice(0, 0);
+//                    if(mode)
+//                        return;
+//                    interuptInVM = true;
+//                    ifr = 64;//cia tarkim yra SEND_TO_CDEVICE bitas
+//                    mode = true;
+//                    ram.save(sp, ip);
+//                    sp++;
+//                    ip = ift;
+//                    break;
+//                case 33://TOD xxxx -(to disk) saves value stored in rw to memory
+//                    if(mode)
+//                        return;
+//                    interuptInVM = true;
+//                    ifr = 128;//cia tarkim yra SEND_TO_DISK bitas
+//                    mode = true;
+//                    ram.save(sp, ip);
+//                    sp++;
+//                    ip = ift;
+//                    break;
+//                case 34://HLT
+//                    if(mode)
+//                        return;
+//                    interuptInVM = true;
+//                    ifr = 8;//cia tarkim yra PROCESS_END bitas
+//                    mode = true;
+//                    ip = ift;
+//                    break;
+//                default:
+//                    if(mode)
+//                        return;
+//                    interuptInVM = true;
+//                    ifr = 16;//cia tarkim yra ILLEGAL_INSTRUCTION bitas
+//                    mode = true;
+//                    ram.save(sp, ip);
+//                    sp++;
+//                    ip = ift;
+//            }
+//        }
     }
 }
 

@@ -11,4 +11,5 @@ package RMachine;
  */
 public interface IInput {
     public int getInt();
+    public boolean getStatus();
 }

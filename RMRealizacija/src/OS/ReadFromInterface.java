@@ -1,0 +1,107 @@
+package OS;
+
+/**
+ * @author Aleksas
+ */
+public class ReadFromInterface extends Thread{
+    private final MainProc mainProc;
+    private final GetPutData getPutData;
+    private final GetInput input;
+    
+    public ReadFromInterface(MainProc mainProc, GetInput input, GetPutData getPutData){
+        this.mainProc = mainProc;
+        this.getPutData = getPutData;
+        this.input = input;
+    }
+    
+    @Override
+    @SuppressWarnings("empty-statement")
+    public void run(){
+        boolean endOfList;
+        String name, compareTo;
+        char symbol;
+        int digit;
+        
+        while(true){
+            input.requests.add(0);
+            while(!input.delivered.containsKey(0)){
+                try {
+                    synchronized(input){
+                        input.wait();
+                    }
+                } catch (InterruptedException ex) {
+                    System.out.println("Something is wrong with waiting for getInput in readfrominterface");
+                }
+            }
+            name = (String) input.delivered.get(0);
+            input.delivered.remove(0);
+            
+            System.out.println("read from interface got " + name);
+            name += "$";
+            
+            if(name.equals("exit$"))
+                break;
+            
+            endOfList = false;
+            int it = -1;
+            
+            while(!endOfList){
+                symbol = '0';
+                compareTo = "";
+                
+                while(symbol != '$'){
+                    it++;
+                    if(symbol == '/'){
+                        endOfList = true;
+                        break;
+                    }
+                    
+                    getPutData.requests.put(0, new GetPutRequest(it, 1, true));
+                    
+                    while(!getPutData.delivered.containsKey(0)){
+                        try {
+                            synchronized(getPutData){
+                                getPutData.wait();
+                            }
+                        } catch (InterruptedException ex) {
+                            System.out.println("Something is wrong with waiting for getPutData in readfrominterface");
+                        }
+                    }
+
+                    digit = getPutData.delivered.get(0);
+                    getPutData.delivered.remove(0);
+                    symbol = (char)digit;
+                    compareTo += symbol;
+                }
+                it++;
+                if(endOfList)
+                    break;
+                if(!name.equals(compareTo))
+                    continue;
+                
+                getPutData.requests.put(0, new GetPutRequest(it, 1, true));
+                    
+                while(!getPutData.delivered.containsKey(0)){
+                    try {
+                        synchronized(getPutData){
+                            getPutData.wait();
+                        }
+                    } catch (InterruptedException ex) {
+                        System.out.println("Something is wrong with waiting for getPutData in readfrominterface");
+                    }
+                }
+                mainProc.createNew.add(getPutData.delivered.get(0));
+                getPutData.delivered.remove(0);
+                //System.out.println("got address = " + address);
+                break;
+            }
+        }
+        synchronized(this){
+            notify();
+        }
+        mainProc.shutdown = true;
+        input.shutDown = true;
+        getPutData.shutDown = true;
+        System.out.println("ReadFromInterface is shutting down...");
+    }
+}

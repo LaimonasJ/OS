@@ -5,7 +5,6 @@
  */
 package rmrealizacija;
 import RMachine.*;
-
 /**
  *
  * @author vytau
@@ -18,16 +17,22 @@ public class RMRealizacija {
     public static void main(String[] args) {
         ChannelDevice cdevice = new ChannelDevice();
         RAM ram = new RAM();
-        Input input = new Input();
+        //Input input = new Input();
         Output output = new Output();
         HDD memory = new HDD("memory.txt");
         cdevice.setRAM(ram);
-        cdevice.setInput(input);
+        //cdevice.setInput(input);
         cdevice.setOutput(output);
         cdevice.setHDD(memory);
         Procesor procesor = new Procesor();
         procesor.setup(cdevice, ram);
         procesor.start();
+        
+//        MockProcesor procesor = new MockProcesor();
+//        procesor.init(cdevice);
+//        procesor.test();
+        
+        //input.finalize();
     }
     
 }
