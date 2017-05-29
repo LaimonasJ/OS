@@ -15,7 +15,7 @@ public class GetPutData extends Thread{
     private final ChannelDevice cdevice;
     private final IRAM ram;
     
-    private final int processDataSegment = 200;
+    private final int processDataSegment = 10;
     private final int MAX_REQUESTS = 100;
     
     public Map<Integer, GetPutRequest> requests = new HashMap<>();
@@ -51,6 +51,9 @@ public class GetPutData extends Thread{
             
             request = requests.get(it);
             
+            if(request.toFrom == 0 && !request.get)
+                System.out.print("process " + it + ">");
+            
             if(request.get)
                 cdevice.setCDevice(request.address, processDataSegment, request.toFrom, 3);
             else
@@ -58,9 +61,10 @@ public class GetPutData extends Thread{
                 
             procesor.ch = 1;
             while(procesor.ch != 0);
+            //System.out.println("delivered:" + ram.get(processDataSegment));
             delivered.put(it, ram.get(processDataSegment));
             requests.remove(it);
-            if(it == 0)
+            if(it < 2)
                 synchronized(this){
                     notify();
                 }

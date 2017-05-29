@@ -1,5 +1,7 @@
 package OS;
 
+import java.util.Map;
+
 /**
  * @author Aleksas
  */
@@ -7,8 +9,10 @@ public class ReadFromInterface extends Thread{
     private final MainProc mainProc;
     private final GetPutData getPutData;
     private final GetInput input;
+    private final Map<Integer, JobGovernor> jobGovernors; 
     
-    public ReadFromInterface(MainProc mainProc, GetInput input, GetPutData getPutData){
+    public ReadFromInterface(MainProc mainProc, GetInput input, GetPutData getPutData, Map<Integer, JobGovernor> jobGovernors){
+        this.jobGovernors = jobGovernors;
         this.mainProc = mainProc;
         this.getPutData = getPutData;
         this.input = input;
@@ -41,6 +45,9 @@ public class ReadFromInterface extends Thread{
             
             if(name.equals("exit$"))
                 break;
+            if(name.equals("ls$")){
+                System.out.println(jobGovernors.toString());
+            }
             
             endOfList = false;
             int it = -1;
@@ -90,14 +97,11 @@ public class ReadFromInterface extends Thread{
                         System.out.println("Something is wrong with waiting for getPutData in readfrominterface");
                     }
                 }
-                mainProc.createNew.add(getPutData.delivered.get(0));
+                mainProc.createNew.add(new NewProcess(name, getPutData.delivered.get(0)));
                 getPutData.delivered.remove(0);
                 //System.out.println("got address = " + address);
                 break;
             }
-        }
-        synchronized(this){
-            notify();
         }
         mainProc.shutdown = true;
         input.shutDown = true;

@@ -83,7 +83,7 @@ public class RAM implements IRAM{
 //        memory.put(9, 2600);
 //        memory.put(10, 3400);
 //        memory.put(49, 3500);
-        memory.put(50, 8);
+//        memory.put(50, 8);
 //        memory.put(51, 2500);
         
     }

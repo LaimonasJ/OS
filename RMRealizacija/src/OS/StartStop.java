@@ -1,16 +1,14 @@
 package OS;
 
 import RMachine.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Aleksas
  */
-public class StartStop {
+public class StartStop extends Thread{
     private final Procesor procesor;
-    private final ChannelDevice cdevice;
-    private final IRAM ram;
-    
-    private final Interupt interupt = new Interupt();
     
     private final GetPutData getPutData;
     private final GetInput getInput;
@@ -18,38 +16,25 @@ public class StartStop {
     private final MainProc mainProc;
     private final Loader loader;
     private final ReadFromInterface readFromInterface;
+    private final Map<Integer, JobGovernor> jobGovernors = new HashMap<>(); 
     
     public StartStop(Procesor procesor, ChannelDevice cdevice, IRAM ram){
         this.procesor = procesor;
-        this.cdevice = cdevice;
-        this.ram = ram;
         
-        loader = new Loader();
         getPutData = new GetPutData(cdevice, ram, procesor);
         getInput = new GetInput(cdevice, ram, procesor);
-        mainProc = new MainProc(procesor, loader, getPutData, getInput);
-        readFromInterface = new ReadFromInterface(mainProc, getInput, getPutData);
+        loader = new Loader(jobGovernors, getPutData, ram);
+        mainProc = new MainProc(procesor, loader, getPutData, getInput, jobGovernors);
+        readFromInterface = new ReadFromInterface(mainProc, getInput, getPutData, jobGovernors);
     }
     
     @SuppressWarnings("empty-statement")
-    public void init(){
+    @Override
+    public void run(){
         getInput.start();
         getPutData.start();
-        loader.start();
         mainProc.start();
         readFromInterface.start();
-        
-//        GetPutData input = (GetPutData)getPutData;
-//        while(input.status != 0);
-//        System.out.println("StartStop got " + input.get(1, 0));
-
-        try {
-            synchronized(readFromInterface){
-                readFromInterface.wait();
-            }
-        } catch (InterruptedException ex) {
-            System.out.println("Something is wrong with waiting for readfrom interface in startstop");
-        }
         
         try {
             readFromInterface.join();
@@ -59,10 +44,13 @@ public class StartStop {
 
         try {
             mainProc.join();
-            loader.join();
+            getInput.join();
+            getPutData.join();
         } catch (InterruptedException ex) {
             System.out.println("Could not join one of the system processes");
         }
         System.out.println("OS is shutting down...");
+        procesor.shutDown = true;
+        procesor.mode = false;
     }
 }

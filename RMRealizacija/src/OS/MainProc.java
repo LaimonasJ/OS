@@ -2,7 +2,6 @@ package OS;
 
 import RMachine.Procesor;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,14 +16,15 @@ public class MainProc extends Thread{
     private final GetInput getInput;
     
     private final int MAX_PROCESSES = 100;
-    private final Map<Integer, JobGovernor> jobGovernors = new HashMap<>();
+    private final Map<Integer, JobGovernor> jobGovernors;
     private int running = 0;
     
-    public final List<Integer> createNew = new ArrayList<>();
+    public final List<NewProcess> createNew = new ArrayList<>();
     
     public boolean shutdown = false;
     
-    public MainProc(Procesor procesor, Loader loader, GetPutData getPutData, GetInput getInput){
+    public MainProc(Procesor procesor, Loader loader, GetPutData getPutData, GetInput getInput, Map<Integer, JobGovernor> jobGovernors){
+        this.jobGovernors = jobGovernors;
         this.procesor = procesor;
         this.loader = loader;
         this.getInput = getInput;
@@ -32,43 +32,72 @@ public class MainProc extends Thread{
     }
     
     private void createProcess(){
-        int inProgress = createNew.get(0);
+        NewProcess inProgress = createNew.get(0);
         createNew.remove(0);
-        int id = 0;
-        while(jobGovernors.containsKey(id))
+        int id = 2;
+        while(jobGovernors.containsKey(id) || id < 2)
             id++;
-        jobGovernors.put(id, new JobGovernor(loader, getPutData, getInput, id, inProgress));
-        System.out.println("processes:" + jobGovernors.toString());
+        jobGovernors.put(id, new JobGovernor(procesor, loader, getPutData, getInput, id, inProgress.name, inProgress.address));
+        jobGovernors.get(id).allocate();
     }
     
     private void checkResources(int process){
-        
+        switch(jobGovernors.get(process).requires){
+            case 0:
+                jobGovernors.get(process).status = 1;
+            case 1:
+                if(getInput.delivered.containsKey(process)){
+                    jobGovernors.get(process).rw = (int) getInput.delivered.get(process);
+                    synchronized(getInput){
+                        getInput.delivered.remove(process);
+                    }
+                    jobGovernors.get(process).status = 1;
+                }
+                break;
+            case 2:
+            case 3:
+                if(getPutData.delivered.containsKey(process)){
+                    getPutData.delivered.remove(process);
+                    jobGovernors.get(process).status = 1;
+                }
+                break;
+        }
     }
     
     private void startProcess(int process){
-        
+        running = process;
+        jobGovernors.get(running).run();
     }
     
     private void planner(){
         int it = running;
         JobGovernor governor;
         while(true){
-            if(jobGovernors.isEmpty())
+            if(jobGovernors.isEmpty() || shutdown)
                 break;
             while(!jobGovernors.containsKey(it))
                 it = (it + 1) % MAX_PROCESSES;
             governor = jobGovernors.get(it);
             switch(governor.status){
+                //running
                 case 0:
-                    startProcess(it);
-                    return;
+                //ready
                 case 1:
+                    startProcess(it);
+                    if(it == 4)
+                        jobGovernors.remove(it);
+                    return;
+                //blocked
+                case 2:
                     checkResources(it);
                     break;
-                case 2:
+                //stopped
+                case 3:
                     jobGovernors.remove(it);
                     break;
             }
+            if(!createNew.isEmpty())
+                createProcess();
         }
     }
     

@@ -19,15 +19,29 @@ public class HDD implements IExt{
     
     public HDD(String name){
         file = new File(name);
-        save(0, (int)'c');
-        save(1, (int)'a');
-        save(2, (int)'$');
-        save(3, 20);
-        save(4, (int)'b');
-        save(5, (int)'a');
-        save(6, (int)'$');
-        save(7, 420);
-        save(8, (int)'/');
+        save(0, (int)'i');
+        save(1, (int)'n');
+        save(2, (int)'p');
+        save(3, (int)'u');
+        save(4, (int)'t');
+        save(5, (int)'$');
+        save(6, 20);
+        save(7, (int)'l');
+        save(8, (int)'o');
+        save(9, (int)'o');
+        save(10, (int)'p');
+        save(11, (int)'$');
+        save(12, 420);
+        save(13, (int)'/');
+        save(20, 3100);
+        save(21, 3200);
+        save(22, 3400);
+        save(23, (int)'/');
+        save(420, 3500);
+        save(421, 2);
+        save(422, 2500);
+        save(423, 3400);
+        save(424, (int)'/');
     }
     
     

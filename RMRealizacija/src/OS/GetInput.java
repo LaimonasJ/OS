@@ -18,7 +18,7 @@ public class GetInput extends Thread{
     private final ChannelDevice cdevice;
     private final IRAM ram;
     
-    private final int processDataSegment = 400;
+    private final int processDataSegment = 11;
     private final int MAX_REQUESTS = 100;
     private final Scanner forSystemProcesses = new Scanner(System.in);
     
@@ -51,6 +51,7 @@ public class GetInput extends Thread{
             }
             while(!requests.contains(it))
                 it = (it + 1) % MAX_REQUESTS;
+            System.out.print("process " + it + "<");
             if(it == 0){
                 delivered.put(it, forSystemProcesses.next());
                 synchronized(this){
@@ -63,7 +64,7 @@ public class GetInput extends Thread{
                 while(procesor.inputChannel != 0);
                 delivered.put(it, ram.get(processDataSegment));
             }
-            requests.remove(it);
+            requests.remove(requests.indexOf(it));
         }
         System.out.println("GetInput is shutting down...");
     }
