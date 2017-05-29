@@ -48,7 +48,7 @@ public class Loader{
         while((char)data != '/'){
             ite++;
 
-            getPutData.requests.put(1, new GetPutRequest(ite, 1, true));
+            getPutData.requests.put(1, new GetPutRequest(ite, 1, true, 0));
 
             while(!getPutData.delivered.containsKey(1)){
                 try {

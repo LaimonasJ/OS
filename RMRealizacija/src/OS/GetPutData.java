@@ -51,8 +51,10 @@ public class GetPutData extends Thread{
             
             request = requests.get(it);
             
-            if(request.toFrom == 0 && !request.get)
+            if(request.toFrom == 0 && !request.get){
                 System.out.print("process " + it + ">");
+                ram.save(processDataSegment, request.value);
+            }
             
             if(request.get)
                 cdevice.setCDevice(request.address, processDataSegment, request.toFrom, 3);

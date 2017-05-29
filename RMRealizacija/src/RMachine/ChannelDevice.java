@@ -13,13 +13,13 @@ public class ChannelDevice extends Thread{
     private int sb, db, st, dt, inputRequester, inputRequesterAddress;
     private Procesor procesor;
     private IRAM ram;
-    private final Thread initInput = new Keyboard();
-    private final Keyboard input = (Keyboard) initInput;
+    private Keyboard input;
     private IOutput output;
     private IExt memory;
+    
+    public String dataForOS = "";
 
     public ChannelDevice() {
-        initInput.start();
         sb = 0;
         db = 0;
         st = 0;
@@ -34,9 +34,9 @@ public class ChannelDevice extends Thread{
         this.ram = ram;
     }
     
-//    public void setInput(IInput input){
-//        this.input = input;
-//    }
+    public void setInput(Keyboard input){
+        this.input = input;
+    }
     
     public void setOutput(IOutput output){
         this.output = output;
@@ -56,10 +56,10 @@ public class ChannelDevice extends Thread{
     public void finalizeInput(){
         switch(inputRequester){
             case 0://output
-                output.printInt(input.data);
+                output.printInt((int)input.data.charAt(0));
                 break;
             case 1://memory
-                memory.save(inputRequesterAddress, input.data);
+                memory.save(inputRequesterAddress, (int)input.data.charAt(0));
                 break;
             case 2://procesor
                 synchronized(procesor){
@@ -71,12 +71,15 @@ public class ChannelDevice extends Thread{
                             break;
                     }
                 }
-                procesor.rw = input.data;
+                procesor.rw = (int)input.data.charAt(0);
                 break;
             case 3://RAM
                 synchronized(ram){
-                    ram.save(inputRequesterAddress, input.data);
+                    ram.save(inputRequesterAddress, (int)input.data.charAt(0));
                 }
+                break;
+            case 4:
+                dataForOS = input.data;
                 break;
         }
         synchronized(procesor){
@@ -177,9 +180,9 @@ public class ChannelDevice extends Thread{
                     synchronized(ram){
                         ram.save(db, stream);
                     }
-                    synchronized(procesor){
-                        procesor.ch = 0;//ready
-                    }
+//                    synchronized(procesor){
+//                        procesor.ch = 0;//ready
+//                    }
             }
             synchronized(procesor){
                 if(procesor.ch != -1)

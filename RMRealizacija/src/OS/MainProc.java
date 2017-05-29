@@ -46,6 +46,9 @@ public class MainProc extends Thread{
             case 0:
                 jobGovernors.get(process).status = 1;
             case 1:
+//                System.out.println(getInput.delivered.toString());
+//                if(!getInput.delivered.isEmpty())
+//                    process = process;
                 if(getInput.delivered.containsKey(process)){
                     jobGovernors.get(process).rw = (int) getInput.delivered.get(process);
                     synchronized(getInput){

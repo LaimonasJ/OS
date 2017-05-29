@@ -36,6 +36,7 @@ public class Procesor {
     
     private ChannelDevice cdevice;
     private IRAM ram;
+    private StartStop os;
 
     public Procesor() {
         rw=0;
@@ -51,10 +52,11 @@ public class Procesor {
         inputChannel = 0;
     }
     
-    public void setup(ChannelDevice device, IRAM ram){
+    public void setup(StartStop os, ChannelDevice device, IRAM ram){
         cdevice = device;
         cdevice.setProcesor(this);
         this.ram = ram;
+        this.os = os;
     }
     
     @SuppressWarnings("empty-statement")
@@ -64,21 +66,21 @@ public class Procesor {
         cdevice.start();
         runtime();
         
-//        System.out.println("rw=" + rw);
-//        System.out.println("ip=" + ip);
-//        System.out.println("ptr=" + ptr);
-//        System.out.println("ift=" + ift);
-//        System.out.println("sf=" + sf);
-//        System.out.println("mode=" + mode);
-//        System.out.println("ifr=" + ifr);
-//        System.out.println("ti=" + ti);
-//        System.out.println("ch=" + ch);
-//        System.out.println(ram.toString());
+        System.out.println("rw=" + rw);
+        System.out.println("ip=" + ip);
+        System.out.println("ptr=" + ptr);
+        System.out.println("ift=" + ift);
+        System.out.println("sf=" + sf);
+        System.out.println("mode=" + mode);
+        System.out.println("ifr=" + ifr);
+        System.out.println("ti=" + ti);
+        System.out.println("ch=" + ch);
+        System.out.println(ram.toString());
         
         System.out.println("PC is shutting down...");
         
-        while(true);
-//        ch = -1;
+//        while(true);
+        ch = -1;
 //        while(true);
 //        try {
 //            cdevice.join();
@@ -329,7 +331,7 @@ public class Procesor {
         boolean interuptInVM = false;
         
         //Cia turi paleisti StartStop<----------------------------------------------------------------------
-        StartStop os = new StartStop(this, cdevice, ram);
+        //StartStop os = new StartStop(this, cdevice, ram);
         os.start();
 //        try {
 //            os.join();

@@ -53,6 +53,7 @@ public class JobGovernor {
             //TIME_OUT
             case 2:
                 status = 0;
+                ip--;
                 break;
             //DATA_SEGMENT_FAULT
             case 4:
@@ -67,25 +68,26 @@ public class JobGovernor {
             case 16:
                 System.out.println("Process " + id + ":" + "ILLEGAL_INSTRUCTION");
                 status = 3;
-                status = 2;
                 break;
             //GET_FROM_CDEVICE
             case 32:
-                getInput.requests.add(id);
+                synchronized(getInput){
+                    getInput.requests.add(id);
+                }
                 requires = 1;
                 status = 2;
                 break;
             //SEND_TO_CDEVICE
             case 64:
                 addressForCDevice = pageTablePointer + 10 + rw / 10 + (rw % 10);
-                getPutData.requests.put(id, new GetPutRequest(addressForCDevice, 0, false));
+                getPutData.requests.put(id, new GetPutRequest(addressForCDevice, 0, false, rw));
                 requires = 2;
                 status = 2;
                 break;
             //SEND_TO_DISK
             case 128:
                 addressForCDevice = pageTablePointer + 10 + rw / 10 + (rw % 10);
-                getPutData.requests.put(id, new GetPutRequest(addressForCDevice, 1, false));
+                getPutData.requests.put(id, new GetPutRequest(addressForCDevice, 1, false, rw));
                 requires = 3;
                 break;
             //DIVISION_BY_ZERO
@@ -131,6 +133,6 @@ public class JobGovernor {
     
     @Override
     public String toString(){
-        return "{id:" + id + ", name:" + name + ", status:" + status + "}";
+        return "{id:" + id + ", name:" + name + ", status:" + status + " requires:" + requires + "}";
     }
 }

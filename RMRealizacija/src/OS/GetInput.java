@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 /**
  * @author Aleksas
@@ -20,7 +19,6 @@ public class GetInput extends Thread{
     
     private final int processDataSegment = 11;
     private final int MAX_REQUESTS = 100;
-    private final Scanner forSystemProcesses = new Scanner(System.in);
     
     public List<Integer> requests = new ArrayList<>();
     public Map<Integer, Object> delivered = new HashMap<>();
@@ -53,15 +51,28 @@ public class GetInput extends Thread{
                 it = (it + 1) % MAX_REQUESTS;
             System.out.print("process " + it + "<");
             if(it == 0){
-                delivered.put(it, forSystemProcesses.next());
+                cdevice.setCDevice(0, processDataSegment, 0, 4);
+                procesor.inputChannel = 1;
+                procesor.ch = 1;
+                while(procesor.inputChannel != 0);
+                delivered.put(it, cdevice.dataForOS);
                 synchronized(this){
                     notify();
                 }
             }
             else{
                 cdevice.setCDevice(0, processDataSegment, 0, 3);
+                procesor.inputChannel = 1;
                 procesor.ch = 1;
-                while(procesor.inputChannel != 0);
+                while(procesor.inputChannel != 0){
+                    try {
+                        synchronized(this){
+                            wait(50);
+                        }
+                    } catch (InterruptedException ex) {
+                        System.out.println("GetInput failed at waiting");
+                    }
+                }
                 delivered.put(it, ram.get(processDataSegment));
             }
             requests.remove(requests.indexOf(it));

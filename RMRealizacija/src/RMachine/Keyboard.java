@@ -7,18 +7,14 @@ import java.util.Scanner;
  */
 public class Keyboard  extends Thread{
 
-    private final Scanner input;
+    
+    private final Scanner scannner = new Scanner(System.in);
     public int status = 0;
     //0 - ready
     //1 - requested
     //2 - busy
     //3 - delivered
-    public int data;
-    
-    public Keyboard(){
-      this.input = new Scanner(System.in);
-    }
-    
+    public String data;
     @Override
     @SuppressWarnings("empty-statement")
     public void run(){
@@ -26,7 +22,7 @@ public class Keyboard  extends Thread{
             while(status == 0);
             if(status == -1)
                 break;
-            data = (int)input.next().charAt(0);
+            data = scannner.next();
             if(status == -1)
                 break;
             status = 2;

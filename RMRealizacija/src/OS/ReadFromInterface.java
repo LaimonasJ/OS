@@ -40,13 +40,14 @@ public class ReadFromInterface extends Thread{
             name = (String) input.delivered.get(0);
             input.delivered.remove(0);
             
-            System.out.println("read from interface got " + name);
+            //System.out.println("read from interface got " + name);
             name += "$";
             
             if(name.equals("exit$"))
                 break;
             if(name.equals("ls$")){
                 System.out.println(jobGovernors.toString());
+                continue;
             }
             
             endOfList = false;
@@ -63,7 +64,7 @@ public class ReadFromInterface extends Thread{
                         break;
                     }
                     
-                    getPutData.requests.put(0, new GetPutRequest(it, 1, true));
+                    getPutData.requests.put(0, new GetPutRequest(it, 1, true, 0));
                     
                     while(!getPutData.delivered.containsKey(0)){
                         try {
@@ -86,7 +87,7 @@ public class ReadFromInterface extends Thread{
                 if(!name.equals(compareTo))
                     continue;
                 
-                getPutData.requests.put(0, new GetPutRequest(it, 1, true));
+                getPutData.requests.put(0, new GetPutRequest(it, 1, true, 0));
                     
                 while(!getPutData.delivered.containsKey(0)){
                     try {
