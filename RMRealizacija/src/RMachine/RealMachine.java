@@ -50,7 +50,7 @@ public class RealMachine {
         sp=0;
         ch=0;
         
-        cdevice = new ChannelDevice(this);
+        cdevice = new ChannelDevice();
         cdevice.run();
         
         
